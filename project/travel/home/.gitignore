@@ -1,0 +1,2 @@
+travel/local_settings.py 
+#not to allow local_settings  sharing at git.
