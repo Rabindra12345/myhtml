@@ -23,26 +23,19 @@ class HeroModelAdmin(admin.ModelAdmin):
         model =Hero
 
 class StoryModelAdmin(admin.ModelAdmin):
-    list_display =["__str__","caption","date"]
+    list_display =["__str__","tag","date","photographer","draft"]
     list_display_links =["__str__"]
    
-    list_filter =["date"]
+    list_filter =["date","tag","photographer","draft"]
 
     class Meta:
         model =Story
 
-class TagModelAdmin(admin.ModelAdmin):
-    list_display =["name"]
-    
 
-    class Meta:
-        model =Tag
-
-    
 admin.site.register(Article,ArticleModelAdmin)
 admin.site.register(Hero,HeroModelAdmin)
 admin.site.register(Story,StoryModelAdmin)
-admin.site.register(Tag,TagModelAdmin)
+admin.site.register(Tag)
 
 
 

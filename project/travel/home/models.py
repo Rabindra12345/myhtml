@@ -1,5 +1,7 @@
 from django.db import models
-
+from django.conf import settings
+from django.utils.text import slugify
+from django.db.models.signals import pre_save
 # Create your models here.
 
 class Article(models.Model):
@@ -22,22 +24,51 @@ class Hero(models.Model):
     def __str__(self):
         return self.caption
 
+class Tag(models.Model):
+    name = models.CharField(max_length=100)
+
+
+    def __str__(self):
+        return self.name
+
+
 
 class Story(models.Model):
-    image =models.ImageField(upload_to='story/',default='default.jpg')
     title = models.CharField(max_length=250)
-    tag = models.CharField(max_length =100)
-    date = models.DateTimeField(auto_now=True, auto_now_add=False)
-    photographer = models.TextField()
-    content = models.CharField(max_length=250)
-    slug =models.SlugField(unique=True)
+    slug =models.SlugField(unique=True,blank=True, null=True)
+    tag =models.ForeignKey(Tag, on_delete=models.CASCADE, default=None)
+    photographer = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    image =models.ImageField(upload_to='story/',default='default.jpg')
+    date = models.DateTimeField()
+    content = models.TextField(max_length=250)
+    draft= models.BooleanField(default=True)
 
 
     def __str__(self):
         return self.title
+    
+    class Meta:
+        ordering =["-date"]
+        verbose_name ="My Story"
+        verbose_name_plural ="My Stories"
 
-class Tag(models.Model):
-    name = models.CharField(max_length=100)
 
-    def __str__(self):
-        return self.name
+def create_slug(instance, new_slug=None):
+    slug = slugify(instance.title)
+    if new_slug is not None:
+        slug =new_slug
+    
+    qs = Story.objects.filter(slug=slug).order_by("-id")
+    # qs->query set
+    exists = qs.exists()
+    if exists:
+        new_slug ="%s-%s"%(slug,qs.first().id)
+        return create_slug(instance, new_slug=new_slug)
+    return slug
+
+
+def pre_save_post_receiver(sender, instance, *args,**kwargs):
+    instance.slug = create_slug(instance)
+    # do other stuffs here
+
+pre_save.connect(pre_save_post_receiver, sender=Story)
